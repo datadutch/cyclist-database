@@ -12,12 +12,26 @@ venv/
 .vscode/
 *.swp
 
+# PDF files
+*.pdf
+Juridisch en Technisch Overzicht Herbruikbaarheid Wielerdata Bronnen voor Openbare GitHub Database.pdf
+>>>>>>> 46cd5f8 (Add PDF file to .gitignore)
+=======
 # Database files
 *.db
 *.sqlite
 
 # Data folders
 data/
+
+# PDF files
+*.pdf
+Juridisch en Technisch Overzicht Herbruikbaarheid Wielerdata Bronnen voor Openbare GitHub Database.pdf
+=======
+# PDF files
+*.pdf
+Juridisch en Technisch Overzicht Herbruikbaarheid Wielerdata Bronnen voor Openbare GitHub Database.pdf
+>>>>>>> 46cd5f8 (Add PDF file to .gitignore)
 
 # Logs and runtime files
 logs/
