@@ -19,6 +19,7 @@ Thank you for your interest in contributing to the Cyclist Database project! Thi
    ```bash
    git checkout -b feature/your-feature-name
    ```
+   **Note**: Never commit or push directly to `main`. Always use a feature branch.
 3. **Make changes** and commit them:
    ```bash
    git commit -m "Add feature: your feature description"
