@@ -13,7 +13,6 @@ venv/
 *.swp
 
 # Database files
-data/
 *.db
 *.sqlite
 
