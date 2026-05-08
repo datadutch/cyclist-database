@@ -393,3 +393,8 @@ This file contains guidelines and preferences for Mistral Vibe when working on t
   git pull origin main
   git checkout -b feature/your-feature-name
   ```
+- **Scraping Guidelines**: Before scraping any website, always check the `robots.txt` file to ensure compliance with the website's scraping policies. For example:
+  ```bash
+  curl https://example.com/robots.txt
+  ```
+  Ensure that the paths you intend to scrape are not disallowed.
