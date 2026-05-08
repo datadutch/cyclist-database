@@ -13,9 +13,11 @@ venv/
 *.swp
 
 # Database files
-data/
 *.db
 *.sqlite
+
+# Data folders
+data/
 
 # Logs and runtime files
 logs/
@@ -50,3 +52,6 @@ Desktop.ini
 # Environment variables
 .env
 .env.local
+
+# PDF reports
+*.pdf
