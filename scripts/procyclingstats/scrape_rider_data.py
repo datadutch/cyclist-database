@@ -187,13 +187,17 @@ def save_to_json(data: List[Dict], filename: str, chunk_size: Optional[int] = No
     Save data to a JSON file in the data directory.
     If chunk_size is provided, data is saved in chunks.
     """
-    filepath = os.path.join("data", filename)
+    # Use source-specific subfolder
+    source_folder = os.path.join("data", "procyclingstats")
+    os.makedirs(source_folder, exist_ok=True)
+    
+    filepath = os.path.join(source_folder, filename)
     if chunk_size:
         # Save in chunks
         for i in range(0, len(data), chunk_size):
             chunk = data[i:i + chunk_size]
             chunk_filename = f"{os.path.splitext(filename)[0]}_{i//chunk_size}.json"
-            chunk_filepath = os.path.join("data", chunk_filename)
+            chunk_filepath = os.path.join(source_folder, chunk_filename)
             with open(chunk_filepath, "w", encoding="utf-8") as f:
                 json.dump(chunk, f, ensure_ascii=False, indent=2)
             logger.info(f"Saved chunk {i//chunk_size} with {len(chunk)} records to {chunk_filepath}")
