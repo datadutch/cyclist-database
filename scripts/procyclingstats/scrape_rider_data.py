@@ -47,6 +47,11 @@ class ProgressBar:
 
 # Ensure data directory exists
 os.makedirs("data", exist_ok=True)
+os.makedirs("data/procyclingstats", exist_ok=True)
+
+# Constants for file paths
+RIDER_URLS_FILE = "data/procyclingstats/rider_urls.json"
+SCRAPED_URLS_FILE = "data/procyclingstats/scraped_urls.json"
 
 # Import the scraping functions
 try:
@@ -73,11 +78,59 @@ RANKING_BASE = (
 SLEEP_BETWEEN_REQUESTS = 1.0  # seconds
 
 
+def load_rider_urls() -> List[str]:
+    """
+    Load rider URLs from a file if it exists.
+    """
+    if os.path.exists(RIDER_URLS_FILE):
+        with open(RIDER_URLS_FILE, "r", encoding="utf-8") as f:
+            rider_urls = json.load(f)
+        logger.info(f"Loaded {len(rider_urls)} rider URLs from {RIDER_URLS_FILE}")
+        return rider_urls
+    return []
+
+
+def save_rider_urls(rider_urls: List[str]) -> None:
+    """
+    Save rider URLs to a file for reuse.
+    """
+    with open(RIDER_URLS_FILE, "w", encoding="utf-8") as f:
+        json.dump(rider_urls, f, ensure_ascii=False, indent=2)
+    logger.info(f"Saved {len(rider_urls)} rider URLs to {RIDER_URLS_FILE}")
+
+
+def load_scraped_urls() -> set:
+    """
+    Load already scraped URLs from a file.
+    """
+    if os.path.exists(SCRAPED_URLS_FILE):
+        with open(SCRAPED_URLS_FILE, "r", encoding="utf-8") as f:
+            scraped_urls = set(json.load(f))
+        logger.info(f"Loaded {len(scraped_urls)} scraped URLs from {SCRAPED_URLS_FILE}")
+        return scraped_urls
+    return set()
+
+
+def save_scraped_urls(scraped_urls: set) -> None:
+    """
+    Save scraped URLs to a file to avoid duplicates.
+    """
+    with open(SCRAPED_URLS_FILE, "w", encoding="utf-8") as f:
+        json.dump(list(scraped_urls), f, ensure_ascii=False, indent=2)
+    logger.info(f"Saved {len(scraped_urls)} scraped URLs to {SCRAPED_URLS_FILE}")
+
+
 def get_all_rider_urls() -> List[str]:
     """
     Paginate through the UCI individual ranking and collect all rider URLs.
     """
-    rider_urls: List[str] = []
+    # Load existing rider URLs if available
+    rider_urls = load_rider_urls()
+    if rider_urls:
+        return rider_urls
+    
+    # Otherwise, scrape new URLs
+    rider_urls = []
     offset = 0
 
     while True:
@@ -104,6 +157,8 @@ def get_all_rider_urls() -> List[str]:
         offset += 100
         time.sleep(SLEEP_BETWEEN_REQUESTS)
 
+    # Save the collected URLs for reuse
+    save_rider_urls(rider_urls)
     logger.info(f"Collected {len(rider_urls)} unique rider URLs.")
     return rider_urls
 
@@ -223,31 +278,45 @@ def main():
         logger.error("No rider URLs collected. Exiting.")
         return
     
+    # Load already scraped URLs to avoid duplicates
+    scraped_urls = load_scraped_urls()
+    
     # Step 2: Scrape rider profiles with progress bar
     riders: List[Dict] = []
+    new_riders: List[Dict] = []
     progress_bar = ProgressBar(len(rider_urls), prefix="Scraping riders:", suffix="Complete")
     
     for i, url in enumerate(rider_urls, 1):
+        if url in scraped_urls:
+            logger.info(f"Skipping already scraped rider: {url}")
+            progress_bar.update()
+            continue
+        
         profile = get_rider_profile(url)
         if profile:
             riders.append(profile)
+            new_riders.append(profile)
+            scraped_urls.add(url)
         progress_bar.update()
         time.sleep(SLEEP_BETWEEN_REQUESTS)
         
         # Save results to JSON after every 25 riders
         if i % 25 == 0 or i == len(rider_urls):
             chunk_index = i // 25
-            save_to_json(riders, f"riders_{chunk_index}.json", chunk_size=100)
-            logger.info(f"Saved intermediate results to riders_{chunk_index}.json")
+            save_to_json(new_riders, f"data/procyclingstats/riders_{chunk_index}.json", chunk_size=100)
+            logger.info(f"Saved intermediate results to data/procyclingstats/riders_{chunk_index}.json")
+    
+    # Save all scraped URLs to avoid duplicates in future runs
+    save_scraped_urls(scraped_urls)
     
     # Step 3: Save rider profiles in chunks of 100
-    save_to_json(riders, "riders.json", chunk_size=100)
+    save_to_json(riders, "data/procyclingstats/riders.json", chunk_size=100)
     
     # Step 4: Example startlist scraping (optional)
     # Uncomment and modify the URL below to scrape a specific race startlist
     # startlist_url = "https://www.procyclingstats.com/race/giro-ditalia/2026/startlist"
     # startlist = get_race_startlist(startlist_url)
-    # save_to_json(startlist, "startlists.json")
+    # save_to_json(startlist, "data/procyclingstats/startlists.json")
     
     logger.info("Scraping completed successfully!")
 
