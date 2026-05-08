@@ -1,0 +1,4 @@
+# Dependencies for scraping scripts
+procyclingstats>=1.0.0
+cloudscraper>=1.2.0
+requests>=2.25.0
