@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+
+# Database files
+data/
+*.db
+*.sqlite
+
+# Logs and runtime files
+logs/
+*.log
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python-specific
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# MacOS
+*.app
+*.pkg
+
+# Windows
+Thumbs.db
+dehthumbs.db
+Desktop.ini
+
+# Environment variables
+.env
+.env.local
