@@ -23,6 +23,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Progress bar setup
+class ProgressBar:
+    def __init__(self, total: int, prefix: str = "", suffix: str = "", length: int = 50):
+        self.total = total
+        self.prefix = prefix
+        self.suffix = suffix
+        self.length = length
+        self.progress = 0
+        self.start_time = time.time()
+
+    def update(self, increment: int = 1):
+        self.progress += increment
+        percent = self.progress / self.total
+        filled_length = int(self.length * percent)
+        bar = "█" * filled_length + "-" * (self.length - filled_length)
+        elapsed = time.time() - self.start_time
+        rate = self.progress / elapsed if elapsed > 0 else 0
+        eta = (self.total - self.progress) / rate if rate > 0 else 0
+        print(f"\r{self.prefix} |{bar}| {self.progress}/{self.total} [{elapsed:.1f}s<{eta:.1f}s, {rate:.2f} riders/s] {self.suffix}", end="\r")
+        if self.progress == self.total:
+            print()
+
 # Ensure data directory exists
 os.makedirs("data", exist_ok=True)
 
@@ -160,14 +182,26 @@ def get_race_startlist(startlist_url: str) -> List[Dict]:
         return []
 
 
-def save_to_json(data: List[Dict], filename: str) -> None:
+def save_to_json(data: List[Dict], filename: str, chunk_size: Optional[int] = None) -> None:
     """
     Save data to a JSON file in the data directory.
+    If chunk_size is provided, data is saved in chunks.
     """
     filepath = os.path.join("data", filename)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    logger.info(f"Saved {len(data)} records to {filepath}")
+    if chunk_size:
+        # Save in chunks
+        for i in range(0, len(data), chunk_size):
+            chunk = data[i:i + chunk_size]
+            chunk_filename = f"{os.path.splitext(filename)[0]}_{i//chunk_size}.json"
+            chunk_filepath = os.path.join("data", chunk_filename)
+            with open(chunk_filepath, "w", encoding="utf-8") as f:
+                json.dump(chunk, f, ensure_ascii=False, indent=2)
+            logger.info(f"Saved chunk {i//chunk_size} with {len(chunk)} records to {chunk_filepath}")
+    else:
+        # Save all data at once
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        logger.info(f"Saved {len(data)} records to {filepath}")
 
 
 def main():
@@ -182,17 +216,19 @@ def main():
         logger.error("No rider URLs collected. Exiting.")
         return
     
-    # Step 2: Scrape rider profiles
+    # Step 2: Scrape rider profiles with progress bar
     riders: List[Dict] = []
-    for i, url in enumerate(rider_urls, 1):
-        logger.info(f"Scraping rider {i}/{len(rider_urls)}: {url}")
+    progress_bar = ProgressBar(len(rider_urls), prefix="Scraping riders:", suffix="Complete")
+    
+    for url in rider_urls:
         profile = get_rider_profile(url)
         if profile:
             riders.append(profile)
+        progress_bar.update()
         time.sleep(SLEEP_BETWEEN_REQUESTS)
     
-    # Step 3: Save rider profiles
-    save_to_json(riders, "riders.json")
+    # Step 3: Save rider profiles in chunks of 100
+    save_to_json(riders, "riders.json", chunk_size=100)
     
     # Step 4: Example startlist scraping (optional)
     # Uncomment and modify the URL below to scrape a specific race startlist
